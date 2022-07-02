@@ -4,9 +4,9 @@ variable "region" {
   description   = "AWS Region"
   type          = string
 }
-variable "profile"{
-    default = "dev"
-    description = "please provide profile to take credencials"
+variable "profile" {
+  default = "dev"
+  description = "please provide profile to take credencials"
 }
 variable "vpc-cidr" {
   default       = "10.0.0.0/16"
