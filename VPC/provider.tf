@@ -1,5 +1,5 @@
 provider "aws" {
-    region = var.region
-    profile = "dev"
-    shared_credentials_file = "/root/.aws/credentials"
+   profile    = "dev"
+   region     = var.region
+   shared_credentials_file = "/root/.aws/credentials"
 }
