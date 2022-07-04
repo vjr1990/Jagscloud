@@ -17,20 +17,20 @@ resource "aws_subnet" "my-public-subnet" {
   cidr_block              = "168.20.${10 + count.index}.0/24"
   availability_zone       = data.aws_availability_zones.az.names[count.index]
   map_public_ip_on_launch = true
-  tags {
+  tags = {
     Name = "my-public-subnet-${count.index}"
   }
 }
 
 # Create private subnets for all  AZ in select regions
 resource "aws_subnet" "private_subnet" {
-  count                   = length(data.aws_availability_zones.available.names)
-  vpc_id                  = aws_vpc.test-vpc.id
+  count                   = length(data.aws_availability_zones.az.names)
+  vpc_id                  = aws_vpc.vpc.id
   cidr_block              = "10.20.${20 + count.index}.0/24"
   availability_zone       = data.aws_availability_zones.az.names[count.index]
   map_public_ip_on_launch = false
-  tags {
-    Name = "my-private-subnet${count.index}"
+  tags = {
+    Name = "my-private-subnet-${count.index}"
   }
 }
 # Create Internet Gateway and Attach it to VPC
@@ -61,6 +61,7 @@ resource "aws_route_table" "public-route-table" {
 # Associate Public Subnet 1 to "Public Route Table"
 # terraform aws associate subnet with route table
 resource "aws_route_table_association" "public-subnet-association" {
-  subnet_id           = aws_subnet.my-public-subnet.id
+  count                   = length(data.aws_availability_zones.az.names)
+  subnet_id           = aws_subnet.my-public-subnet[count.index]
   route_table_id      = aws_route_table.public-route-table.id
 }
