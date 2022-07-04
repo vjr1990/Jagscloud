@@ -6,43 +6,40 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames    = true
 
   tags      = {
-    Name    = "Test VPC"
+    Name    = "Test VPC ${var.env}"
+  }
+}
+data "aws_availability_zones" "az" {}
+# Create public subnets for all  AZ in select regions
+resource "aws_subnet" "my-public-subnet" {
+  count                   = length(data.aws_availability_zones.az.names)
+  vpc_id                  = aws_vpc.vpc.id
+  cidr_block              = "168.20.${10 + count.index}.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = true
+  tags {
+    Name = "my-public-subnet-${count.index}"
   }
 }
 
+# Create private subnets for all  AZ in select regions
+resource "aws_subnet" "private_subnet" {
+  count                   = length(data.aws_availability_zones.available.names)
+  vpc_id                  = aws_vpc.test-vpc.id
+  cidr_block              = "10.20.${20 + count.index}.0/24"
+  availability_zone       = data.aws_availability_zones.available.names[count.index]
+  map_public_ip_on_launch = false
+  tags {
+    Name = "my-private-subnet${count.index}"
+  }
+}
 # Create Internet Gateway and Attach it to VPC
 # terraform aws create internet gateway
 resource "aws_internet_gateway" "internet-gateway" {
   vpc_id    = aws_vpc.vpc.id
 
   tags      = {
-    Name    = "Test IGW"
-  }
-}
-
-# Create Public Subnet 1
-# terraform aws create subnet
-resource "aws_subnet" "public-subnet-1" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = var.public-subnet-1-cidr
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
-
-  tags      = {
-    Name    = "Public Subnet 1"
-  }
-}
-
-# Create Public Subnet 2
-# terraform aws create subnet
-resource "aws_subnet" "public-subnet-2" {
-  vpc_id                  = aws_vpc.vpc.id
-  cidr_block              = var.public-subnet-2-cidr
-  availability_zone       = "us-east-1b"
-  map_public_ip_on_launch = true
-
-  tags      = {
-    Name    = "Public Subnet 2"
+    Name    = "IGW-${var.env}"
   }
 }
 
@@ -63,66 +60,7 @@ resource "aws_route_table" "public-route-table" {
 
 # Associate Public Subnet 1 to "Public Route Table"
 # terraform aws associate subnet with route table
-resource "aws_route_table_association" "public-subnet-1-route-table-association" {
-  subnet_id           = aws_subnet.public-subnet-1.id
+resource "aws_route_table_association" "public-subnet-association" {
+  subnet_id           = aws_subnet.my-public-subnet.id
   route_table_id      = aws_route_table.public-route-table.id
-}
-
-# Associate Public Subnet 2 to "Public Route Table"
-# terraform aws associate subnet with route table
-resource "aws_route_table_association" "public-subnet-2-route-table-association" {
-  subnet_id           = aws_subnet.public-subnet-2.id
-  route_table_id      = aws_route_table.public-route-table.id
-}
-
-# Create Private Subnet 1
-# terraform aws create subnet
-resource "aws_subnet" "private-subnet-1" {
-  vpc_id                   = aws_vpc.vpc.id
-  cidr_block               = var.private-subnet-1-cidr
-  availability_zone        = "us-east-1a"
-  map_public_ip_on_launch  = false
-
-  tags      = {
-    Name    = "Private Subnet 1 | App Tier"
-  }
-}
-
-# Create Private Subnet 2
-# terraform aws create subnet
-resource "aws_subnet" "private-subnet-2" {
-  vpc_id                   = aws_vpc.vpc.id
-  cidr_block               = var.private-subnet-2-cidr
-  availability_zone        = "us-east-1b"
-  map_public_ip_on_launch  = false
-
-  tags      = {
-    Name    = "Private Subnet 2 | App Tier"
-  }
-}
-
-# Create Private Subnet 3
-# terraform aws create subnet
-resource "aws_subnet" "private-subnet-3" {
-  vpc_id                   = aws_vpc.vpc.id
-  cidr_block               = var.private-subnet-3-cidr
-  availability_zone        = "us-east-1a"
-  map_public_ip_on_launch  = false
-
-  tags      = {
-    Name    = "Private Subnet 3 | Database Tier"
-  }
-}
-
-# Create Private Subnet 4
-# terraform aws create subnets
-resource "aws_subnet" "private-subnet-4" {
-  vpc_id                   = aws_vpc.vpc.id
-  cidr_block               = var.private-subnet-4-cidr
-  availability_zone        = "us-east-1b"
-  map_public_ip_on_launch  = false
-
-  tags      = {
-    Name    = "Private Subnet 4 | Database Tier"
-  }
 }
